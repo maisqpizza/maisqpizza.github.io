@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirecionando…</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f5f5f7;
+    text-align: center;
+  }
+  .card {
+    max-width: 420px;
+    width: 100%;
+  }
+  .card img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 12px;
+  }
+  p {
+    font-size: 16px;
+    color: #444;
+    line-height: 1.4;
+    margin: 0 0 24px;
+  }
+  a.btn {
+    display: inline-block;
+    background: #25D366;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 17px;
+    padding: 14px 28px;
+    border-radius: 999px;
+  }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ddd;
+    border-top-color: #25D366;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .countdown { font-size: 13px; color: #888; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div id="app" class="card">
+  <div class="spinner"></div>
+  <p>Redirecionando…</p>
+</div>
+
+<script>
+// ======================================================================
+// CONFIGURAÇÃO — É SÓ MEXER AQUI PRA TROCAR PRA ONDE O QR CODE MANDA.
+// Depois de editar: salve, faça commit + push. Some 30-60s e já está
+// valendo, sem precisar gerar um QR Code novo.
+// ======================================================================
+const CONFIG = {
+  // "direct" -> manda direto pro WhatsApp, sem tela intermediária
+  // "promo"  -> mostra uma tela de promoção antes, com botão pro WhatsApp
+  mode: "direct",
+
+  whatsapp: {
+    number: "5511999999999",       // DDI + DDD + número, só dígitos
+    message: "Olá! Vim pelo QR Code."
+  },
+
+  promo: {
+    title: "🔥 Promoção especial!",
+    message: "Aproveite nossa oferta exclusiva antes de falar com a gente.",
+    imageUrl: "",                  // opcional: URL de uma imagem/banner
+    buttonText: "Falar no WhatsApp",
+    autoRedirectSeconds: 0         // 0 = espera clique. Ex: 5 = redireciona sozinho em 5s
+  }
+};
+// ======================================================================
+// NÃO PRECISA MEXER DAQUI PRA BAIXO
+// ======================================================================
+
+function buildWhatsAppUrl(wa) {
+  const text = encodeURIComponent(wa.message || "");
+  return `https://wa.me/${wa.number}${text ? `?text=${text}` : ""}`;
+}
+
+function renderDirect(waUrl) {
+  window.location.replace(waUrl);
+}
+
+function renderPromo(promo, waUrl) {
+  const app = document.getElementById("app");
+  const img = promo.imageUrl
+    ? `<img src="${promo.imageUrl}" alt="">`
+    : "";
+  let countdownHtml = "";
+  app.innerHTML = `
+    ${img}
+    <h1>${promo.title}</h1>
+    <p>${promo.message}</p>
+    <a class="btn" id="goBtn" href="${waUrl}">${promo.buttonText}</a>
+    <div class="countdown" id="countdown"></div>
+  `;
+
+  if (promo.autoRedirectSeconds > 0) {
+    let remaining = promo.autoRedirectSeconds;
+    const el = document.getElementById("countdown");
+    const tick = () => {
+      el.textContent = `Redirecionando em ${remaining}s…`;
+      if (remaining <= 0) {
+        window.location.href = waUrl;
+        return;
+      }
+      remaining--;
+      setTimeout(tick, 1000);
+    };
+    tick();
+  }
+}
+
+const waUrl = buildWhatsAppUrl(CONFIG.whatsapp);
+
+if (CONFIG.mode === "promo") {
+  renderPromo(CONFIG.promo, waUrl);
+} else {
+  renderDirect(waUrl);
+}
+</script>
+</body>
+</html>
