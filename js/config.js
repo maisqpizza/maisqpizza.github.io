@@ -11,10 +11,10 @@
 //   state     -> sigla do estado (UF)
 //   country   -> sigla do país (ISO, ex: "BR")
 //   label     -> nome do atendimento/loja mostrado na tela
-//   aliases   -> outras cidades que devem cair nesta filial (opcional),
+//   aliases   -> outros nomes que a busca da lista deve achar (opcional),
 //                ex: ["Gaspar", "Pomerode"]
-//   lat / lon -> coordenadas da cidade (opcional, usado só pra ordenar a
-//                lista manual pela mais próxima)
+//   lat / lon -> coordenadas da loja: o GPS do cliente escolhe a filial
+//                mais próxima destas coordenadas
 //   whatsapp  -> número (DDI + DDD + número, só dígitos) e mensagem
 export const BRANCHES = [
   {
@@ -48,21 +48,20 @@ export const BRANCHES = [
 ];
 
 export const SETTINGS = {
-  // Segundos do contador antes de abrir a filial sugerida pela localização.
+  // Segundos do contador antes de abrir a filial sugerida pelo GPS.
   countdownSeconds: 5,
 
   // Segundos antes de abrir a filial que o cliente já escolheu antes
   // (dá tempo de tocar em "Trocar cidade"). 0 = abre na hora.
   savedPreferenceSeconds: 2,
 
-  // Se outra filial fica a até esta distância (km) da cidade detectada pelo
-  // IP, não redireciona sozinho: pergunta qual unidade. A localização por
-  // IP costuma apontar a cidade vizinha maior (Timbó aparece como
-  // Blumenau, ~23 km). 0 = desliga essa proteção.
-  ambiguityRadiusKm: 60,
+  // Distância máxima (km) entre o cliente e a filial mais próxima para
+  // sugerir essa filial. Mais longe que isso, mostra a lista.
+  maxDistanceKm: 40,
 
-  // Tempo máximo esperando cada serviço de localização por IP.
-  geoTimeoutMs: 2500,
+  // Tempo máximo esperando o GPS (inclui o cliente responder à permissão).
+  // Depois disso segue com a escolha salva ou a lista.
+  gpsTimeoutMs: 15000,
 
   // "direct" -> depois de escolher a cidade, vai direto pro WhatsApp
   // "promo"  -> mostra uma tela de promoção antes, com botão pro WhatsApp

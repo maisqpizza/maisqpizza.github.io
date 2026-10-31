@@ -94,14 +94,26 @@ function countdown(seconds, onDone) {
   return { el, start, stop };
 }
 
-// Sugestão baseada no IP. seconds = 0 -> sem contador (baixa confiança).
+// Aguardando o GPS: o navegador mostra o pedido de permissão por cima.
+export function showLocating({ onSkip }) {
+  mount(
+    h("div", { class: "spinner", "aria-hidden": "true" }),
+    h("h1", { text: "Olá!" }),
+    h("p", { text: "Permita o acesso à localização para encontrarmos a unidade mais próxima de você." }),
+    h("div", { class: "actions" }, [
+      h("button", { class: "btn btn-ghost", type: "button", text: "Escolher cidade na lista", onclick: onSkip })
+    ])
+  );
+}
+
+// Sugestão baseada no GPS. seconds = 0 -> sem contador.
 export function showSuggestion({ branch, seconds, onTimeout, onConfirm, onChoose }) {
   const timer = seconds > 0 ? countdown(seconds, onTimeout) : null;
   const stopThen = (fn) => () => { if (timer) timer.stop(); fn(); };
 
   mount(
     h("h1", { text: "Olá!" }),
-    h("p", { class: "muted", text: "Identificamos que você pode estar em:" }),
+    h("p", { class: "muted", text: "Identificamos que você está perto de:" }),
     h("p", { class: "city", text: cityLabel(branch) }),
     h("p", { text: `Vamos direcionar você para o atendimento desta cidade (${branch.label})?` }),
     timer && timer.el,

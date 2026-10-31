@@ -1,7 +1,6 @@
 // Preferência de filial do visitante, guardada só no navegador dele.
 // Guarda apenas o id da filial e quando foi escolhida — nada de IP ou
-// cidade detectada. Só é salva quando o visitante escolhe/confirma
-// explicitamente; a cidade inferida pelo IP nunca vira preferência sozinha.
+// coordenadas. É usada quando o GPS não está disponível ou foi negado.
 
 // v2: descarta escolhas salvas antes de existir a pergunta para filiais
 // vizinhas, quando o contador induzia a confirmar Blumenau estando em Timbó.
