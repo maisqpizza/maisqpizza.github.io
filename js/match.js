@@ -8,11 +8,15 @@ export function normalize(s) {
     .trim();
 }
 
-// Retorna { branch, confidence: "high" | "low" } ou null.
-//   high -> cidade + país batem e o estado confere: pode redirecionar sozinho
-//   low  -> cidade bate mas o estado não veio na resposta: só sugere,
-//           sem contador automático
-export function matchBranch(loc, branches) {
+// Retorna { branch, confidence: "high" | "low" | "ambiguous" } ou null.
+//   high      -> cidade + país batem e o estado confere: pode redirecionar sozinho
+//   low       -> cidade bate mas o estado não veio na resposta: só sugere,
+//                sem contador automático
+//   ambiguous -> existe outra filial a até `ambiguityRadiusKm` da cidade
+//                detectada. IP por cidade erra muito entre cidades vizinhas
+//                (ex: operadoras de Timbó saem na internet por Blumenau),
+//                então o visitante escolhe entre as unidades da região.
+export function matchBranch(loc, branches, { ambiguityRadiusKm = 0 } = {}) {
   if (!loc || !loc.city) return null;
   const city = normalize(loc.city);
   const country = normalize(loc.country);
@@ -23,6 +27,9 @@ export function matchBranch(loc, branches) {
     if (!names.includes(city)) continue;
     if (country && normalize(b.country) !== country) continue;
     if (region && normalize(b.state) !== region) continue;
+    if (hasNearbyBranch(b, branches, ambiguityRadiusKm)) {
+      return { branch: b, confidence: "ambiguous" };
+    }
     return { branch: b, confidence: country && region ? "high" : "low" };
   }
   return null;
@@ -35,6 +42,12 @@ function distanceKm(a, b) {
   const h = Math.sin(dLat / 2) ** 2 +
     Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
   return 12742 * Math.asin(Math.sqrt(h));
+}
+
+function hasNearbyBranch(branch, branches, radiusKm) {
+  if (!(radiusKm > 0) || !Number.isFinite(branch.lat)) return false;
+  return branches.some((o) => o !== branch && Number.isFinite(o.lat) &&
+    distanceKm(branch, o) <= radiusKm);
 }
 
 // Ordena as filiais pela mais próxima quando há coordenadas; senão, por nome.
