@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Diagnóstico de localização</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .card { text-align: left; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { padding: 8px 4px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { text-align: left; color: var(--muted); font-weight: 600; }
+  .ok { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>Diagnóstico de localização</h1>
+  <p class="muted">Mostra qual cidade cada serviço de localização por IP enxerga
+    para esta conexão. Teste no wi-fi e na rede móvel e mande um print.
+    Nada é salvo.</p>
+  <table>
+    <thead><tr><th>Serviço</th><th>Cidade</th><th>Operadora</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</main>
+<script type="module">
+const providers = [
+  ["ipwho.is", "https://ipwho.is/?fields=success,region_code,city,connection", d => [d.city, d.region_code, d.connection && d.connection.isp]],
+  ["ipapi.co", "https://ipapi.co/json/", d => d.error ? null : [d.city, d.region_code, d.org]],
+  ["ipapi.is", "https://api.ipapi.is/", d => [d.location ? d.location.city : d.city, d.location ? d.location.state : d.region, d.company && d.company.name || d.company]],
+  ["db-ip", "https://api.db-ip.com/v2/free/self", d => [d.city, d.stateProvCode, ""]],
+  ["ipinfo.io", "https://ipinfo.io/json", d => [d.city, d.region, d.org]],
+  ["geojs", "https://get.geojs.io/v1/ip/geo.json", d => [d.city, d.region, d.organization_name]]
+];
+const rows = document.getElementById("rows");
+for (const [name, url, parse] of providers) {
+  const tr = document.createElement("tr");
+  const cells = [name, "…", ""].map(t => { const td = document.createElement("td"); td.textContent = t; tr.append(td); return td; });
+  rows.append(tr);
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), 8000);
+  fetch(url, { signal: ctrl.signal, credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const v = parse(d);
+      if (!v) throw "sem dados";
+      cells[1].textContent = [v[0], v[1]].filter(Boolean).join(" - ") || "—";
+      cells[2].textContent = v[2] || "—";
+      if (/timb/i.test(v[0] || "")) cells[1].className = "ok";
+    })
+    .catch(e => { cells[1].textContent = "erro (" + e + ")"; });
+}
+</script>
+</body>
+</html>
