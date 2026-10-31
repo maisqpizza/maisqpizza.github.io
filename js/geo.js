@@ -1,62 +1,25 @@
-// Localização aproximada por IP. Não usa a Geolocation API do navegador
-// (que pede permissão) e não guarda nada: o resultado vive só na memória
-// da página. Os dados são estimativa — VPN e rede móvel erram bastante.
+// Localização pelo GPS do aparelho (Geolocation API). O navegador pede
+// permissão na primeira vez e lembra a resposta do cliente. As coordenadas
+// ficam só na memória da página: servem pra achar a filial mais próxima e
+// não são enviadas a nenhum serviço nem salvas.
+//
+// Localização por IP foi descartada: na região (ex: Unifique) todos os
+// serviços testados enxergam Timbó como Blumenau ou Itajaí.
 
-const PROVIDERS = [
-  {
-    name: "ipwho.is",
-    // `fields` limita a resposta ao necessário (sem IP, sem provedor).
-    url: "https://ipwho.is/?fields=success,country_code,region,region_code,city,latitude,longitude",
-    parse: (d) => d && d.success !== false ? {
-      country: d.country_code,
-      regionCode: d.region_code,
-      region: d.region,
-      city: d.city,
-      lat: d.latitude,
-      lon: d.longitude
-    } : null
-  },
-  {
-    name: "ipapi.co",
-    url: "https://ipapi.co/json/",
-    parse: (d) => d && !d.error ? {
-      country: d.country_code,
-      regionCode: d.region_code,
-      region: d.region,
-      city: d.city,
-      lat: d.latitude,
-      lon: d.longitude
-    } : null
-  }
-];
-
-async function fetchJson(url, timeoutMs) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      credentials: "omit",
-      referrerPolicy: "no-referrer",
-      cache: "no-store"
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// Retorna { country, regionCode, region, city, lat, lon } ou null.
-// Nunca lança erro: falha de rede/timeout/dado incompleto vira null.
-export async function locateByIp({ timeoutMs = 2500 } = {}) {
-  for (const provider of PROVIDERS) {
-    try {
-      const loc = provider.parse(await fetchJson(provider.url, timeoutMs));
-      if (loc && loc.city && loc.country) return loc;
-    } catch (_) {
-      // tenta o próximo serviço
-    }
-  }
-  return null;
+// Retorna { lat, lon } ou null (negou, sem GPS, demorou demais).
+// Nunca lança erro.
+export function locateByGps({ timeoutMs = 15000 } = {}) {
+  return new Promise((resolve) => {
+    if (!("geolocation" in navigator)) { resolve(null); return; }
+    let done = false;
+    const finish = (v) => { if (!done) { done = true; clearTimeout(timer); resolve(v); } };
+    // O `timeout` da API só conta depois que o cliente responde à permissão;
+    // este cobre o caso de ele ignorar o pedido.
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => finish({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => finish(null),
+      { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 10 * 60 * 1000 }
+    );
+  });
 }
