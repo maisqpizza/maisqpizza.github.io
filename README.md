@@ -19,6 +19,10 @@ O mesmo link atende todas as filiais. Ao abrir:
    filial, mostra "Identificamos que você pode estar em: …" com contador
    circular de 5s. Ao zerar, abre a filial (sem salvar como preferência).
    "Sim, ir agora" salva a escolha; "Escolher outra cidade" para o contador.
+   Se houver outra filial a até 60 km da cidade detectada
+   (`ambiguityRadiusKm`), **não** redireciona sozinho: pergunta qual
+   unidade. IP por cidade não diferencia cidades vizinhas — de Timbó,
+   tanto no wi-fi quanto na rede móvel, o IP aparece como Blumenau.
 3. **Seleção manual** — se a API falhar/demorar (>2,5s por serviço), a
    cidade não tiver filial, ou a confiança for baixa, mostra a lista
    pesquisável. A cidade escolhida fica salva pras próximas visitas.

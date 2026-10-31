@@ -61,10 +61,15 @@ async function start() {
 
   showLoading("Encontrando o atendimento mais próximo…");
   const loc = await locateByIp({ timeoutMs: SETTINGS.geoTimeoutMs });
-  const match = matchBranch(loc, BRANCHES);
+  const match = matchBranch(loc, BRANCHES, { ambiguityRadiusKm: SETTINGS.ambiguityRadiusKm });
 
   if (!match) {
     chooseManually(loc);
+    return;
+  }
+
+  if (match.confidence === "ambiguous") {
+    chooseManually(loc, `Identificamos que você está na região de ${cityLabel(match.branch)}. Qual unidade fica mais perto de você?`);
     return;
   }
 

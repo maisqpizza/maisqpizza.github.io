@@ -55,6 +55,12 @@ export const SETTINGS = {
   // (dá tempo de tocar em "Trocar cidade"). 0 = abre na hora.
   savedPreferenceSeconds: 2,
 
+  // Se outra filial fica a até esta distância (km) da cidade detectada pelo
+  // IP, não redireciona sozinho: pergunta qual unidade. A localização por
+  // IP costuma apontar a cidade vizinha maior (Timbó aparece como
+  // Blumenau, ~23 km). 0 = desliga essa proteção.
+  ambiguityRadiusKm: 60,
+
   // Tempo máximo esperando cada serviço de localização por IP.
   geoTimeoutMs: 2500,
 
